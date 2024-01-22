@@ -73,6 +73,7 @@ def create_plant_statistic(id, MTG_dict):
         # print(f" {row_index} PLANT {id[16:18]} created.")
 
 
+
 def format_order_one(order_one, row_index):
     if order_one[0].upper() == 'T':
         order_one = order_one[0].upper() + '000'
@@ -314,7 +315,8 @@ def clean(mtg, out_array = True, out_dictionary = True):
                             internode_number_o2 = get_internode_number(internode_number_o2)
                             internode_stored_o2 = f'I{internode_number_o2}'
                         except KeyError:
-                            print(f"{i,date,cell,plant}")
+                            print(f"The key {o1} was not found on position {i,date,cell,plant} \n"
+                                  f"!!! One possible reason can be that the branching of the first Internode was not indicated. !!!")
                 else:
                     if "X" in o2:
                         internode_stored_o2 = 'I001'
@@ -355,13 +357,15 @@ def clean(mtg, out_array = True, out_dictionary = True):
                     elif len(str(leaf_number)) == 2:
                         leaf_number = f"0{leaf_number}"
                     MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Main Stem"][1][o1] += ['L'+leaf_number]
+            # checks for Organ to be an Internode
             elif 'I' in o2:
-                # checks for Organ to be an Internode
+                # adds one to the counter
                 MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][0] += 1
-                # checks if index is unknown if N
+                # checks if index is unknown by checking the N
                 if o2[-1] == 'N':
+                    #initialises or resets the index of the side branch
                     index_side_branch = 0
-                    # checks if parent of the organ (internode) is in dictionary
+                    # checks if parent of the organ (internode on order 2) is in the dictionary
                     if o1 not in MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][1]:
                         # adds the first branching internode
                         MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][1][o1] = ["XI01"]
@@ -370,7 +374,7 @@ def clean(mtg, out_array = True, out_dictionary = True):
                         # parent is already known
                         # how many organs are already known from this parent add one to get the number of the current one
                         internode_number = len(MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][1][o1])+1
-                        #check if it not the first branching
+                        #check if it is not the first branching
                         if MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][1][o1][:index_side_branch] == "XI01":
                             # sets the internode number to
                             internode_number = internode_number - len(MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Internode Side Branch"][1][o1][:index_side_branch])
@@ -420,14 +424,6 @@ def clean(mtg, out_array = True, out_dictionary = True):
     else:
         return MTG_dict, mtg_array
 
-
-def translate(array):
-    chars = []
-    chars_str = ''
-    for i, u in enumerate(array):
-        chars += [{i: chr(u)}]
-        chars_str += chr(u)
-    return chars, chars_str
 
 
 output_array = clean(mtg, out_array= False)
