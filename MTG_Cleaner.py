@@ -38,18 +38,13 @@ data_on_lop_dates.to_csv("C:/Users/jacob/pythonProject/General_raw_data/MTG_File
 # IMPORT of the Data
 '_________________________________________________________________'
 mtg = pd.read_csv("C:/Users/jacob/pythonProject/General_raw_data/MTG_Files/MTGs_FINAL.csv")
+# Selects only the ID column and drops all the empty cells which are usually at the end of an Excel file
+mtg = mtg['ID'].dropna()
 # the mtg file needs an ID column which is used otherwise KeyError
-try:
-    mtg = mtg.loc[:, "ID"].dropna()
-except KeyError:
-    print("It seems the there is no column called ID. The ID column must to contain IDs of the following order:\n"
-          "20231212.CELL32.E4.Order1.Order2.Order3\n"
-          "Date = 20231212, Cell = CELL32, Plant ID = E4")
 '_________________________________________________________________'
 
 
 # FUNCTIONS
-
 
 def create_plant_statistic(id, MTG_dict):
     plant_statistic_template = {
@@ -148,7 +143,7 @@ def format_order_two(order_two, row_index):
 
 
 def format_order_three(order_three, row_index):
-    if order_three == '' or order_three == None:
+    if order_three == '' or order_three == None or order_three == '0':
         order_three = '0000'
     else:
         if order_three[0] == 'X':
@@ -413,7 +408,26 @@ def clean(mtg, out_array = True, out_dictionary = True):
             elif 'T' in o3:
                 MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Truss"][0] += 1
                 # Description of organ not added yet.
-
+        elif o2 != '0000' and o3 != '0000':
+            #checks if organ is leaf on order three
+            if 'L' in o3:
+                #counts a leaf
+                MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][0] += 1
+                #check if parent is in dictionary if not creates a dict for the grandparent
+                if o1 not in MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1]:
+                     #creates organ dictionary for grandparent and parent  + adding the organ
+                    MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1] = {}
+                    MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1][o2] = []
+                    MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1][o2] += ["XL01"]
+                else:
+                    if internode_stored_o2 not in MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1]:
+                        MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1][o2] = []
+                        leaf_number = len(MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1][o2])+1
+                        if leaf_number == 1:
+                            leaf_number = f'0{leaf_number}'
+                        MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Leaf Side Branch"][1][o1][internode_stored_o2] += [f'XL{leaf_number}']
+            elif 'S' in o3:
+                MTG_dict[date][f"CELL{cell}"][plant]["Plant_Statistic"]["Shoot"][0] += 1
         else:
             print(f"On the index {i} occurred a problem.\n"
                   f"Plant {cell} {plant} has the following organ {o1, o2, o3}.\n")
@@ -428,5 +442,6 @@ def clean(mtg, out_array = True, out_dictionary = True):
 
 output_array = clean(mtg, out_array= False)
 
-with open("C:/Users/jacob/pythonProject/General_raw_data/MTG_Files/MTG_ALL_Data.json", "w") as writer:
+with open("C:/Users/jacob/pythonProject/General_raw_data/MTG_Files/MTG_ALL_Data_UNCHANGED.json", "w") as writer:
     json.dump(output_array, writer, indent=4)
+
